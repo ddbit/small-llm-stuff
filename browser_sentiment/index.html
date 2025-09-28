@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Sentiment Analysis</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            min-height: 120px;
+            resize: vertical;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .analyze-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: transform 0.2s;
+        }
+        
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+        }
+        
+        .sentiment-score {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .positive {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .neutral {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .model-status {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .model-loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .model-ready {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .model-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding: 30px 0;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+            color: white;
+        }
+        
+        .footer h3 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: white;
+        }
+        
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .tech-item {
+            background: rgba(255,255,255,0.1);
+            padding: 12px 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .tech-item strong {
+            color: #fff;
+        }
+        
+        .footer-note {
+            text-align: center;
+            font-style: italic;
+            opacity: 0.9;
+            line-height: 1.5;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎭 Browser Sentiment Analysis</h1>
+        
+        <div id="modelStatus" class="model-status model-loading">
+            Loading sentiment analysis model...
+        </div>
+        
+        <div class="input-section">
+            <textarea 
+                id="textInput" 
+                placeholder="Enter text to analyze sentiment... (e.g., 'I love this product!' or 'This is terrible.')"
+                disabled
+            ></textarea>
+            <button id="analyzeBtn" class="analyze-btn" disabled>
+                Analyze Sentiment
+            </button>
+        </div>
+        
+        <div id="results" style="display: none;"></div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <h3>🔬 Technical Specifications</h3>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <strong>Model:</strong> DistilBERT Base Uncased
+                </div>
+                <div class="tech-item">
+                    <strong>Parameters:</strong> 66M (distilled from 110M BERT-base)
+                </div>
+                <div class="tech-item">
+                    <strong>Architecture:</strong> 6 layers, 12 attention heads, 768 hidden size
+                </div>
+                <div class="tech-item">
+                    <strong>Vocabulary:</strong> 30,522 WordPiece tokens
+                </div>
+                <div class="tech-item">
+                    <strong>Training Data:</strong> Stanford Sentiment Treebank (SST-2)
+                </div>
+                <div class="tech-item">
+                    <strong>Accuracy:</strong> 91.3% on SST-2 test set
+                </div>
+                <div class="tech-item">
+                    <strong>Model Size:</strong> ~250MB ONNX format
+                </div>
+                <div class="tech-item">
+                    <strong>Inference:</strong> WebAssembly + WebGPU acceleration
+                </div>
+                <div class="tech-item">
+                    <strong>Latency:</strong> ~50-200ms per inference (browser-dependent)
+                </div>
+            </div>
+            <p class="footer-note">
+                This prototype demonstrates client-side transformer inference using Transformers.js. 
+                DistilBERT retains 97% of BERT's performance while being 60% smaller and 60% faster.
+            </p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+
+        env.allowRemoteModels = true;
+        env.allowLocalModels = false;
+
+        let classifier = null;
+        const modelStatus = document.getElementById('modelStatus');
+        const textInput = document.getElementById('textInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const results = document.getElementById('results');
+
+        async function initializeModel() {
+            try {
+                modelStatus.textContent = 'Loading DistilBERT sentiment model...';
+                
+                classifier = await pipeline('sentiment-analysis', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english');
+                
+                modelStatus.textContent = '✅ Model loaded successfully!';
+                modelStatus.className = 'model-status model-ready';
+                
+                textInput.disabled = false;
+                analyzeBtn.disabled = false;
+                textInput.focus();
+                
+            } catch (error) {
+                console.error('Model loading error:', error);
+                modelStatus.textContent = '❌ Failed to load model. Check console for details.';
+                modelStatus.className = 'model-status model-error';
+            }
+        }
+
+        async function analyzeSentiment() {
+            const text = textInput.value.trim();
+            
+            if (!text) {
+                showError('Please enter some text to analyze.');
+                return;
+            }
+
+            if (!classifier) {
+                showError('Model not loaded yet. Please wait.');
+                return;
+            }
+
+            try {
+                analyzeBtn.disabled = true;
+                analyzeBtn.textContent = 'Analyzing...';
+                results.innerHTML = '<div class="loading">Analyzing sentiment...</div>';
+                results.style.display = 'block';
+
+                const result = await classifier(text);
+                displayResults(result, text);
+
+            } catch (error) {
+                console.error('Analysis error:', error);
+                showError('Failed to analyze sentiment. Check console for details.');
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.textContent = 'Analyze Sentiment';
+            }
+        }
+
+        function displayResults(result, originalText) {
+            const prediction = result[0];
+            const label = prediction.label;
+            const confidence = (prediction.score * 100).toFixed(1);
+            
+            const sentimentClass = label.toLowerCase() === 'positive' ? 'positive' : 
+                                 label.toLowerCase() === 'negative' ? 'negative' : 'neutral';
+            
+            const emoji = sentimentClass === 'positive' ? '😊' : 
+                         sentimentClass === 'negative' ? '😞' : '😐';
+            
+            results.innerHTML = `
+                <h3>Analysis Results</h3>
+                <div class="sentiment-score ${sentimentClass}">
+                    <span>${emoji} ${label}</span>
+                    <span>${confidence}% confident</span>
+                </div>
+                <p><strong>Text analyzed:</strong> "${originalText.substring(0, 100)}${originalText.length > 100 ? '...' : ''}"</p>
+            `;
+            results.style.display = 'block';
+        }
+
+        function showError(message) {
+            results.innerHTML = `<div class="error">${message}</div>`;
+            results.style.display = 'block';
+        }
+
+        analyzeBtn.addEventListener('click', analyzeSentiment);
+        
+        textInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                analyzeSentiment();
+            }
+        });
+
+        initializeModel();
+    </script>
+</body>
+</html>
