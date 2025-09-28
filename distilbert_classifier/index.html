@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DistilBERT Text Classifier</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            min-height: 120px;
+            resize: vertical;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .classify-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: transform 0.2s;
+        }
+        
+        .classify-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .classify-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+        }
+        
+        .category-score {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            position: relative;
+        }
+        
+        .category-bar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            border-radius: 8px;
+            opacity: 0.3;
+            z-index: 0;
+        }
+        
+        .category-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .sport { background-color: #28a745; }
+        .technology { background-color: #007bff; }
+        .business { background-color: #17a2b8; }
+        .politics { background-color: #dc3545; }
+        .music { background-color: #e83e8c; }
+        .cinema { background-color: #fd7e14; }
+        
+        .category-icon {
+            font-size: 20px;
+            margin-right: 10px;
+        }
+        
+        .category-name {
+            text-transform: capitalize;
+            font-size: 16px;
+        }
+        
+        .confidence-score {
+            font-weight: bold;
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .model-status {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .model-loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .model-ready {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .model-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .examples {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+        }
+        
+        .example-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.2s;
+        }
+        
+        .example-btn:hover {
+            background: #495057;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding: 30px 0;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .footer-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px;
+            color: white;
+        }
+        
+        .footer h3 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: white;
+        }
+        
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .tech-item {
+            background: rgba(255,255,255,0.1);
+            padding: 12px 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .tech-item strong {
+            color: #fff;
+        }
+        
+        .footer-note {
+            text-align: center;
+            font-style: italic;
+            opacity: 0.9;
+            line-height: 1.5;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏷️ DistilBERT Text Classifier</h1>
+        
+        <div id="modelStatus" class="model-status model-loading">
+            Loading DistilBERT classification model...
+        </div>
+        
+        <div class="input-section">
+            <textarea 
+                id="textInput" 
+                placeholder="Enter text to classify... (e.g., 'The latest iPhone features an amazing camera system')"
+                disabled
+            ></textarea>
+            <button id="classifyBtn" class="classify-btn" disabled>
+                Classify Text
+            </button>
+        </div>
+        
+        <div class="examples">
+            <h3>Try these examples:</h3>
+            <button class="example-btn" onclick="setExample('The latest iPhone features an amazing camera system with computational photography')">Technology</button>
+            <button class="example-btn" onclick="setExample('Apple stock prices surged after the quarterly earnings report exceeded expectations')">Business</button>
+            <button class="example-btn" onclick="setExample('The World Cup final was an incredible match with amazing goals and fantastic teamwork')">Sport</button>
+            <button class="example-btn" onclick="setExample('The new Marvel movie features stunning visual effects and an compelling storyline')">Cinema</button>
+            <button class="example-btn" onclick="setExample('The presidential election results have sparked intense debates across the nation')">Politics</button>
+            <button class="example-btn" onclick="setExample('Beyoncé new album showcases her incredible vocal range and innovative production')">Music</button>
+        </div>
+        
+        <div id="results" style="display: none;"></div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <h3>🔬 Technical Specifications</h3>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <strong>Model:</strong> DistilBERT Base Uncased
+                </div>
+                <div class="tech-item">
+                    <strong>Categories:</strong> Sport, Technology, Business, Politics, Music, Cinema
+                </div>
+                <div class="tech-item">
+                    <strong>Architecture:</strong> 6 layers, 12 attention heads, 768 hidden size
+                </div>
+                <div class="tech-item">
+                    <strong>Vocabulary:</strong> 30,522 WordPiece tokens
+                </div>
+                <div class="tech-item">
+                    <strong>Zero-Shot:</strong> MNLI-trained model for classification
+                </div>
+                <div class="tech-item">
+                    <strong>Model Size:</strong> ~250MB ONNX format
+                </div>
+                <div class="tech-item">
+                    <strong>Inference:</strong> WebAssembly + WebGPU acceleration
+                </div>
+                <div class="tech-item">
+                    <strong>Performance:</strong> Real-time classification in browser
+                </div>
+            </div>
+            <p class="footer-note">
+                This prototype demonstrates client-side multi-class text classification using DistilBERT 
+                with zero-shot capabilities. Runs entirely in the browser with WebGPU acceleration.
+            </p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+
+        env.allowRemoteModels = true;
+        env.allowLocalModels = false;
+
+        let classifier = null;
+        const modelStatus = document.getElementById('modelStatus');
+        const textInput = document.getElementById('textInput');
+        const classifyBtn = document.getElementById('classifyBtn');
+        const results = document.getElementById('results');
+
+        const categories = [
+            { name: 'sport', icon: '⚽', label: 'This text is about sports' },
+            { name: 'technology', icon: '💻', label: 'This text is about technology' },
+            { name: 'business', icon: '💼', label: 'This text is about business' },
+            { name: 'politics', icon: '🏛️', label: 'This text is about politics' },
+            { name: 'music', icon: '🎵', label: 'This text is about music' },
+            { name: 'cinema', icon: '🎬', label: 'This text is about cinema' }
+        ];
+
+        async function initializeModel() {
+            try {
+                modelStatus.textContent = 'Loading DistilBERT zero-shot classification model...';
+                
+                classifier = await pipeline('zero-shot-classification', 'Xenova/distilbert-base-uncased-mnli');
+                
+                modelStatus.textContent = '✅ Model loaded successfully!';
+                modelStatus.className = 'model-status model-ready';
+                
+                textInput.disabled = false;
+                classifyBtn.disabled = false;
+                textInput.focus();
+                
+            } catch (error) {
+                console.error('Model loading error:', error);
+                modelStatus.textContent = '❌ Failed to load model. Check console for details.';
+                modelStatus.className = 'model-status model-error';
+            }
+        }
+
+        async function classifyText() {
+            const text = textInput.value.trim();
+            
+            if (!text) {
+                showError('Please enter some text to classify.');
+                return;
+            }
+
+            if (!classifier) {
+                showError('Model not loaded yet. Please wait.');
+                return;
+            }
+
+            try {
+                classifyBtn.disabled = true;
+                classifyBtn.textContent = 'Classifying...';
+                results.innerHTML = '<div class="loading">Classifying text...</div>';
+                results.style.display = 'block';
+
+                const candidateLabels = categories.map(cat => cat.label);
+                const result = await classifier(text, candidateLabels);
+                
+                displayResults(result, text);
+
+            } catch (error) {
+                console.error('Classification error:', error);
+                showError('Failed to classify text. Check console for details.');
+            } finally {
+                classifyBtn.disabled = false;
+                classifyBtn.textContent = 'Classify Text';
+            }
+        }
+
+        function displayResults(result, originalText) {
+            const { labels, scores } = result;
+            
+            let html = `
+                <h3>Classification Results</h3>
+                <p><strong>Text analyzed:</strong> "${originalText.substring(0, 150)}${originalText.length > 150 ? '...' : ''}"</p>
+                <div style="margin-top: 20px;">
+            `;
+            
+            labels.forEach((label, index) => {
+                const score = scores[index];
+                const confidence = (score * 100).toFixed(1);
+                const category = categories.find(cat => label.includes(cat.name));
+                const categoryName = category ? category.name : 'unknown';
+                const categoryIcon = category ? category.icon : '❓';
+                
+                html += `
+                    <div class="category-score">
+                        <div class="category-bar ${categoryName}" style="width: ${confidence}%;"></div>
+                        <div class="category-content">
+                            <span>
+                                <span class="category-icon">${categoryIcon}</span>
+                                <span class="category-name">${categoryName}</span>
+                            </span>
+                            <span class="confidence-score">${confidence}%</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            results.innerHTML = html;
+            results.style.display = 'block';
+        }
+
+        function showError(message) {
+            results.innerHTML = `<div class="error">${message}</div>`;
+            results.style.display = 'block';
+        }
+
+        window.setExample = function(text) {
+            textInput.value = text;
+            if (!classifyBtn.disabled) {
+                classifyText();
+            }
+        };
+
+        classifyBtn.addEventListener('click', classifyText);
+        
+        textInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                classifyText();
+            }
+        });
+
+        initializeModel();
+    </script>
+</body>
+</html>
