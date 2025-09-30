@@ -1,0 +1,24 @@
+# Placeholder for ONNX model file
+# 
+# In a real deployment, place your DistilBERT ONNX model here:
+# - distilbert-int8.onnx (quantized INT8 DistilBERT model)
+#
+# You can obtain the model from:
+# - Hugging Face Model Hub (export to ONNX format)
+# - ONNX Model Zoo
+# - Convert from PyTorch using torch.onnx.export()
+#
+# Example command to convert from Hugging Face:
+# python -c "
+# from transformers import DistilBertModel, DistilBertTokenizer
+# from transformers.onnx import export
+# import torch
+# 
+# model = DistilBertModel.from_pretrained('distilbert-base-uncased')
+# tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
+# 
+# # Export to ONNX
+# export(tokenizer, model, 'onnx', Path('./distilbert-base.onnx'))
+# 
+# # Then quantize to INT8 using ONNX Runtime tools
+# "

@@ -1,0 +1,30 @@
+{
+  "name": "tinybert-browser-training",
+  "version": "1.0.0",
+  "description": "Browser-native text classification with frozen DistilBERT backbone and trainable head",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "onnxruntime-web": "^1.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.8"
+  },
+  "keywords": [
+    "machine-learning",
+    "distilbert",
+    "webgpu",
+    "federated-learning",
+    "browser",
+    "onnx"
+  ],
+  "author": "",
+  "license": "MIT"
+}
